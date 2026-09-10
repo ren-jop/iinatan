@@ -289,6 +289,22 @@ assert(
 );
 
 overlay.applyConfig({ nestedPopupMode: "shift-hover" });
+overlay.openNestedPopup(popup, source);
+const shiftHoverFirst = overlay.state.nestedPopups[0];
+overlay.openNestedPopup(shiftHoverFirst.element, source);
+shiftHoverFirst.element.listeners.click({
+  currentTarget: shiftHoverFirst.element,
+  target: shiftHoverFirst.element.querySelector(".body"),
+  clientX: 40,
+  clientY: 40,
+  shiftKey: false,
+});
+assert(
+  overlay.state.nestedPopups.length === 1 &&
+    overlay.state.nestedPopups[0] === shiftHoverFirst,
+  "Shift-hover should allow an unmodified click in a parent popup to dismiss only its child",
+);
+overlay.clearNestedPopups(0);
 popup.listeners.mousemove({
   currentTarget: popup,
   target: gloss,

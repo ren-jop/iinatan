@@ -7450,12 +7450,7 @@
     return source.position >= range.start && source.position < range.end;
   }
   function onNestedPopupClick(event) {
-    if (
-      state.config.nestedPopupMode === "off" ||
-      (state.config.nestedPopupMode === "shift-hover" &&
-        !(event && event.shiftKey)) ||
-      popupSelectionIsActive()
-    )
+    if (state.config.nestedPopupMode === "off" || popupSelectionIsActive())
       return;
     const popup = popupContainerForNode(event && event.currentTarget);
     if (!popup || nestedPopupClickIsInteractive(event && event.target, popup))
@@ -7470,6 +7465,11 @@
       clearNestedPopups(popupDepth(popup));
       return;
     }
+    if (
+      state.config.nestedPopupMode === "shift-hover" &&
+      !(event && event.shiftKey)
+    )
+      return;
     openNestedPopup(popup, source);
   }
   function onPopupContainerClick(event) {
