@@ -496,12 +496,19 @@ async function ankiCaptureSentenceAudio(context, prefs) {
   const cachedPath = ankiMediaPath(
     ankiMediaFilename(documentName, ankiRandomHex(12), "mkv"),
   );
+  const audioMap =
+    source.origin === "selected-audio-track"
+      ? "0:a:0"
+      : Number.isInteger(source.ffIndex) && source.ffIndex >= 0
+        ? "0:" + String(source.ffIndex)
+        : "0:a:0";
   await ensureAnkiMediaRoot();
   try {
-    const codecArgs =
+    const codecArgs = ["-ac", "2"].concat(
       format === "opus"
         ? ["-c:a", "libopus", "-b:a", String(bitrate) + "k"]
-        : ["-codec:a", "libmp3lame", "-b:a", String(bitrate) + "k"];
+        : ["-codec:a", "libmp3lame", "-b:a", String(bitrate) + "k"],
+    );
     const ffmpegArgs = (input, seek) =>
       [
         "-nostdin",
@@ -516,7 +523,7 @@ async function ankiCaptureSentenceAudio(context, prefs) {
         "-t",
         String(duration.toFixed(3)),
         "-map",
-        "0:a:0",
+        audioMap,
         "-vn",
         "-sn",
         "-dn",

@@ -1435,15 +1435,31 @@ async function testStreamingSentenceAudioSources() {
       context.mediaSourceSnapshot({
         path: "/Volumes/Media/video.mkv",
         streamOpenFilename: "/Volumes/Media/video.mkv",
+        trackList: [
+          { type: "audio", selected: false, "ff-index": 1 },
+          { type: "audio", selected: true, "ff-index": 3 },
+        ],
       });
     await context.ankiCaptureSentenceAudio(cardContext, prefs);
     const delayedDirectSeek =
       execCalls[0].args[execCalls[0].args.indexOf("-ss") + 1];
+    const directChannelCount =
+      execCalls[0].args[execCalls[0].args.indexOf("-ac") + 1];
+    const directAudioMap =
+      execCalls[0].args[execCalls[0].args.indexOf("-map") + 1];
     assert(
       mpvCommands.some((item) => item.name === "dump-cache") &&
         execCalls[0].args.includes("/Volumes/Media/video.mkv") &&
         delayedDirectSeek === "11.750",
       "Local sentence audio applies mpv's subtitle delay before direct FFmpeg extraction",
+    );
+    assert(
+      directChannelCount === "2",
+      "Sentence audio extraction should downmix multichannel sources before encoding",
+    );
+    assert(
+      directAudioMap === "0:3",
+      "Sentence audio extraction should map IINA's selected internal audio track",
     );
 
     existing = new Set();

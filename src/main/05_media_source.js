@@ -181,6 +181,14 @@ function mediaSourceProperty(name) {
   }
 }
 
+function mediaSourceTrackFfIndex(track) {
+  const value = track && typeof track === "object" ? track : {};
+  const raw =
+    value["ff-index"] !== undefined ? value["ff-index"] : value.ffIndex;
+  const index = Number(raw);
+  return Number.isInteger(index) && index >= 0 ? index : -1;
+}
+
 function mediaSourceSnapshot(values) {
   const input = values && typeof values === "object" ? values : {};
   const original = mediaSourceDescriptor(input.path, "path");
@@ -207,7 +215,9 @@ function mediaSourceSnapshot(values) {
     : "";
   const audio = externalAudio
     ? mediaSourceDescriptor(externalAudio, "selected-audio-track")
-    : primary;
+    : Object.assign({}, primary, {
+        ffIndex: mediaSourceTrackFfIndex(selectedAudio),
+      });
   return {
     original,
     effective,

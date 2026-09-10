@@ -1214,6 +1214,14 @@ function mediaSourceProperty(name) {
   }
 }
 
+function mediaSourceTrackFfIndex(track) {
+  const value = track && typeof track === "object" ? track : {};
+  const raw =
+    value["ff-index"] !== undefined ? value["ff-index"] : value.ffIndex;
+  const index = Number(raw);
+  return Number.isInteger(index) && index >= 0 ? index : -1;
+}
+
 function mediaSourceSnapshot(values) {
   const input = values && typeof values === "object" ? values : {};
   const original = mediaSourceDescriptor(input.path, "path");
@@ -1240,7 +1248,9 @@ function mediaSourceSnapshot(values) {
     : "";
   const audio = externalAudio
     ? mediaSourceDescriptor(externalAudio, "selected-audio-track")
-    : primary;
+    : Object.assign({}, primary, {
+        ffIndex: mediaSourceTrackFfIndex(selectedAudio),
+      });
   return {
     original,
     effective,
@@ -17354,12 +17364,19 @@ async function ankiCaptureSentenceAudio(context, prefs) {
   const cachedPath = ankiMediaPath(
     ankiMediaFilename(documentName, ankiRandomHex(12), "mkv"),
   );
+  const audioMap =
+    source.origin === "selected-audio-track"
+      ? "0:a:0"
+      : Number.isInteger(source.ffIndex) && source.ffIndex >= 0
+        ? "0:" + String(source.ffIndex)
+        : "0:a:0";
   await ensureAnkiMediaRoot();
   try {
-    const codecArgs =
+    const codecArgs = ["-ac", "2"].concat(
       format === "opus"
         ? ["-c:a", "libopus", "-b:a", String(bitrate) + "k"]
-        : ["-codec:a", "libmp3lame", "-b:a", String(bitrate) + "k"];
+        : ["-codec:a", "libmp3lame", "-b:a", String(bitrate) + "k"],
+    );
     const ffmpegArgs = (input, seek) =>
       [
         "-nostdin",
@@ -17374,7 +17391,7 @@ async function ankiCaptureSentenceAudio(context, prefs) {
         "-t",
         String(duration.toFixed(3)),
         "-map",
-        "0:a:0",
+        audioMap,
         "-vn",
         "-sn",
         "-dn",

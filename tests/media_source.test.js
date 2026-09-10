@@ -155,4 +155,17 @@ assert(
   "resolved separate audio tracks expose their actual playable URL",
 );
 
+const selectedInternalAudio = context.mediaSourceSnapshot({
+  path: "/Volumes/Media/video.mkv",
+  streamOpenFilename: "/Volumes/Media/video.mkv",
+  trackList: [
+    { type: "audio", selected: false, "ff-index": 1 },
+    { type: "audio", selected: true, "ff-index": 3 },
+  ],
+});
+assert(
+  selectedInternalAudio.audio.ffIndex === 3,
+  "selected internal audio tracks preserve mpv's FFmpeg stream index",
+);
+
 console.log("media source resolution tests passed");
