@@ -1,12 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.1.8 - 2026-09-10
 
 ### Fixed
 
-- Allowed unmodified clicks inside a parent popup to dismiss only its nested child when Shift-hover nested popups are enabled.
-- Downmixed multichannel subtitle audio to stereo before encoding Anki sentence audio, allowing 5.1 sources to export to MP3 or Opus.
-- Honored IINA's manually selected internal audio track when exporting Anki sentence audio instead of always mapping the first stream.
+- Improved nested popup dismissal during Shift-hover lookup and Anki sentence-audio export for selected and multichannel audio tracks.
 
 ## 2.1.7 - 2026-08-28
 
