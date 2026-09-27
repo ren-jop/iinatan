@@ -15144,7 +15144,7 @@ async function ankiConnectInvoke(action, params, options) {
     }
   }
   if (lastError && lastError.ankiConnectRetryable && attempts > 1) {
-    throw ankiConnectTransportError(
+    throw new Error(
       "AnkiConnect did not respond after " +
         String(attempts) +
         " attempts in " +
@@ -17812,17 +17812,6 @@ function postAnkiCardState(requestId, payload) {
   } catch (_) {}
   postToOverlay("anki-card-state", message);
 }
-function ankiBridgeFailurePayload(error) {
-  const message = compactError(error);
-  const unavailable = !!(error && error.ankiConnectRetryable);
-  return {
-    ok: false,
-    state: unavailable ? "unavailable" : "error",
-    unavailable,
-    staleNoteIds: /No matching Anki cards/i.test(message),
-    message,
-  };
-}
 function ankiBridgeRequestId(payload) {
   return payload && payload.requestId !== undefined
     ? String(payload.requestId)
@@ -17959,10 +17948,13 @@ function handleBridgeAnkiCardStatus(payload) {
       const status = await ankiCardStatusForContext(payload);
       postAnkiCardStateForBridgePayload(payload, status);
     } catch (error) {
-      postAnkiCardStateForBridgePayload(
-        payload,
-        ankiBridgeFailurePayload(error),
-      );
+      const message = compactError(error);
+      postAnkiCardStateForBridgePayload(payload, {
+        ok: false,
+        state: "error",
+        staleNoteIds: /No matching Anki cards/i.test(message),
+        message,
+      });
     } finally {
       finishAnkiBridgeRequest("anki-card-status", payload);
     }
@@ -17990,10 +17982,13 @@ function handleBridgeAnkiCardOpen(payload) {
         message: "Opened in Anki.",
       });
     } catch (error) {
-      postAnkiCardStateForBridgePayload(
-        payload,
-        ankiBridgeFailurePayload(error),
-      );
+      const message = compactError(error);
+      postAnkiCardStateForBridgePayload(payload, {
+        ok: false,
+        state: "error",
+        staleNoteIds: /No matching Anki cards/i.test(message),
+        message,
+      });
     } finally {
       finishAnkiBridgeRequest("anki-card-open", payload);
     }
@@ -18125,10 +18120,13 @@ function handleBridgeAnkiCardAdd(payload) {
         message: "Added Anki card.",
       });
     } catch (error) {
-      postAnkiCardStateForBridgePayload(
-        payload,
-        ankiBridgeFailurePayload(error),
-      );
+      const message = compactError(error);
+      postAnkiCardStateForBridgePayload(payload, {
+        ok: false,
+        state: "error",
+        staleNoteIds: /No matching Anki cards/i.test(message),
+        message,
+      });
     } finally {
       finishAnkiBridgeRequest("anki-card-add", payload);
     }

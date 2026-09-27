@@ -175,7 +175,7 @@ async function ankiConnectInvoke(action, params, options) {
     }
   }
   if (lastError && lastError.ankiConnectRetryable && attempts > 1) {
-    throw ankiConnectTransportError(
+    throw new Error(
       "AnkiConnect did not respond after " +
         String(attempts) +
         " attempts in " +

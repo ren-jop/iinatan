@@ -4272,7 +4272,9 @@
   function scheduleHidePopup() {
     if (window.__IINATAN_POPUP_PREVIEW__) return;
     if (state.hideTimer) clearTimeout(state.hideTimer);
-    state.hideTimer = setTimeout(() => hidePopup(), 0);
+    // Keep just enough time for the pointer to cross the word-to-popup safety
+    // corridor; once it is outside both areas the popup disappears immediately.
+    state.hideTimer = setTimeout(() => hidePopup(), 60);
   }
   function closestExternalLink(target) {
     let el = target;
@@ -5939,13 +5941,25 @@
         if (item) placeNestedPopup(item);
       }, 0);
   }
+  function ankiStatusLooksUnavailable(status) {
+    const message = String((status && status.message) || "");
+    return !!(
+      (status && status.state === "unavailable") ||
+      /AnkiConnect did not respond after/i.test(message) ||
+      /AnkiConnect .*timed out/i.test(message) ||
+      /AnkiConnect request failed/i.test(message) ||
+      /Failed to connect|ECONNREFUSED|connection refused/i.test(message)
+    );
+  }
   function setAnkiButtonState(control, status) {
     const group = ankiActionGroupForControl(control);
     const button = ankiPrimaryButtonForGroup(group);
     const forceButton = ankiForceAddButtonForGroup(group);
     if (!group || !button) return;
     const rawStateName = String((status && status.state) || "ready");
-    const stateName = rawStateName === "unavailable" ? "ready" : rawStateName;
+    const stateName = ankiStatusLooksUnavailable(status)
+      ? "ready"
+      : rawStateName;
     const duplicate = !!(status && status.duplicate);
     const statusNoteIds = Array.isArray(status && status.noteIds)
       ? status.noteIds
@@ -9420,8 +9434,7 @@
     if (
       payload &&
       payload.ok === false &&
-      payload.unavailable !== true &&
-      payload.state !== "unavailable" &&
+      !ankiStatusLooksUnavailable(payload) &&
       payload.message &&
       pendingType !== "anki-card-status"
     )

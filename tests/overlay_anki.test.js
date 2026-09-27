@@ -875,8 +875,7 @@ const overlayAnkiExports = [
   passiveOverlay.updateAnkiCardState({
     requestId: passiveStatus.payload.requestId,
     ok: false,
-    state: "unavailable",
-    unavailable: true,
+    state: "error",
     message:
       "AnkiConnect did not respond after 3 attempts in 0.1 seconds (timeout 3 seconds per attempt).",
   });
@@ -908,8 +907,7 @@ const overlayAnkiExports = [
   passiveOverlay.updateAnkiCardState({
     requestId: deliberateAdd.payload.requestId,
     ok: false,
-    state: "unavailable",
-    unavailable: true,
+    state: "error",
     message:
       "AnkiConnect did not respond after 3 attempts in 0.1 seconds (timeout 3 seconds per attempt).",
   });
