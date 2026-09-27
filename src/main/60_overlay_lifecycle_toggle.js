@@ -58,6 +58,11 @@ function updateOverlayRuntimeState(reason) {
 function handleOverlayDocumentReady(payload, source) {
   const wasReady = overlayDocumentReady;
   overlayDocumentReady = true;
+  overlayLoadNeedsWindowRetry = false;
+  if (overlayDocumentLoadTimer !== null) {
+    cancelOneShot(overlayDocumentLoadTimer);
+    overlayDocumentLoadTimer = null;
+  }
   try {
     // IINA may ignore the pre-load clickable state until it observes a real
     // transition on the ready WebView. Reapply the desired state from false.
@@ -155,22 +160,79 @@ function handleNativeLayoutPerformance(payload) {
       }),
   );
 }
-function loadOverlayDocument(reason) {
+let overlayDocumentLoadTimer = null;
+let overlayDocumentLoadReason = "";
+let overlayLoadNeedsWindowRetry = false;
+function overlayPlayerWindowReady() {
+  try {
+    if (typeof core === "undefined" || !core || !core.window) return true;
+    return core.window.loaded === true;
+  } catch (_) {
+    return false;
+  }
+}
+function performOverlayDocumentLoad() {
+  const reason = overlayDocumentLoadReason || "initialization";
+  overlayDocumentLoadTimer = null;
+  if (
+    typeof pluginShuttingDown !== "undefined" &&
+    pluginShuttingDown
+  )
+    return;
+  if (!overlayPlayerWindowReady()) {
+    overlayLoadNeedsWindowRetry = true;
+    debugLog(
+      "defer overlay document until player window is ready reason=" + reason,
+    );
+    return;
+  }
+  if (overlayDocumentReady) return;
+  overlayLoadNeedsWindowRetry = false;
   overlayDocumentReady = false;
-  debugLog(
-    "load overlay document reason=" + String(reason || "initialization"),
-  );
-  overlay.loadFile("overlay.html");
-  overlay.setOpacity(1);
-  overlay.setClickable(true);
-  overlay.show();
+  debugLog("load overlay document reason=" + reason);
+  try {
+    overlay.loadFile("overlay.html");
+    overlay.setOpacity(1);
+    overlay.setClickable(true);
+    overlay.show();
+  } catch (error) {
+    debugWarn("overlay document load failed: " + compactError(error));
+  }
+}
+function loadOverlayDocument(reason) {
+  overlayDocumentLoadReason = String(reason || "initialization");
+  if (overlayDocumentReady) return;
+  if (!overlayPlayerWindowReady()) {
+    overlayLoadNeedsWindowRetry = true;
+    debugLog(
+      "skip overlay load without player window reason=" +
+        overlayDocumentLoadReason,
+    );
+    return;
+  }
+  overlayLoadNeedsWindowRetry = false;
+  if (overlayDocumentLoadTimer !== null) {
+    debugLog(
+      "coalesced overlay load reason=" + overlayDocumentLoadReason,
+    );
+    return;
+  }
+  // Defer out of IINA's synchronous plugin/window event stack. This avoids
+  // calling the overlay WebView bridge while an old plugin instance is being
+  // torn down during reload/startup.
+  overlayDocumentLoadTimer = scheduleOneShot(performOverlayDocumentLoad, 80);
 }
 function initializeOverlay(options) {
   ensureOverlayBridge();
   const reloadIfNotReady = !!(options && options.reloadIfNotReady);
   const reason = String((options && options.reason) || "initialization");
   if (initialized) {
-    if (reloadIfNotReady && !overlayDocumentReady) loadOverlayDocument(reason);
+    if (
+      reloadIfNotReady &&
+      !overlayDocumentReady &&
+      overlayLoadNeedsWindowRetry
+    )
+      loadOverlayDocument(reason);
     return;
   }
   debugLog(

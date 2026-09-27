@@ -10,7 +10,7 @@
   "globalEntry": "global.js",
   "preferencesPage": "preferences.html",
   "helpPage": "README.md",
-  "ghRepo": "afn478/iinatan",
+  "ghRepo": "ren-jop/iinatan",
   "ghVersion": 218,
   "preferenceDefaults": {
     "enabledByDefault": true,

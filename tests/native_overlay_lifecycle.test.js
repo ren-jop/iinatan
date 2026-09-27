@@ -240,6 +240,7 @@ async function testPersistedStartupAndIdempotence() {
   });
   assert.strictEqual(harness.context.enabled, true);
   assert.strictEqual(harness.context.overlayRuntimeState, "starting-helper");
+  await new Promise((resolve) => setTimeout(resolve, 100));
   assert.strictEqual(harness.loadCalls, 1);
   assert.strictEqual(harness.backendCalls, 1);
   harness.context.setOverlayRuntimeState("enabling", "readiness-event");
@@ -327,9 +328,9 @@ async function testPersistedStartupReadinessOrdering() {
   });
 
   // Recommended dictionary downloads can start before a video window exists.
-  // IINA accepts that load call but cannot create a ready player WebView.
+  // Do not call IINA's overlay WebView until the real player window exists.
   harness.context.initializeOverlay({ reason: "dictionary-task" });
-  assert.strictEqual(harness.loadCalls, 1);
+  assert.strictEqual(harness.loadCalls, 0);
   assert.strictEqual(harness.context.overlayDocumentReady, false);
 
   vm.runInContext(
@@ -337,8 +338,10 @@ async function testPersistedStartupReadinessOrdering() {
     harness.context,
   );
 
+  harness.context.core.window.loaded = true;
   eventHandlers["iina.window-loaded"]();
   assert.strictEqual(harness.context.enabled, true);
+  await new Promise((resolve) => setTimeout(resolve, 100));
   harness.handlers.ready({});
   readiness.file = true;
   eventHandlers["mpv.file-loaded"]();
@@ -368,8 +371,8 @@ async function testPersistedStartupReadinessOrdering() {
   );
   assert.strictEqual(
     harness.loadCalls,
-    2,
-    "window-loaded retries an overlay load attempted before a player window existed",
+    1,
+    "window startup performs exactly one overlay load after the player window exists",
   );
   assert.strictEqual(
     harness.maxActiveIntervals,
@@ -395,11 +398,12 @@ async function testPersistedStartupReadinessOrdering() {
   );
 }
 
-function testPersistedDisabledStartup() {
+async function testPersistedDisabledStartup() {
   const harness = lifecycleContext();
   harness.context.lifecycleApi.setEnabled(false, {
     trigger: "persisted-startup",
   });
+  await new Promise((resolve) => setTimeout(resolve, 100));
   assert.strictEqual(harness.context.enabled, false);
   assert.strictEqual(harness.context.overlayRuntimeState, "disabled");
   assert.strictEqual(harness.loadCalls, 1);
@@ -718,7 +722,7 @@ function testBridgeHelloMarksOverlayReady() {
 (async () => {
   await testPersistedStartupAndIdempotence();
   await testPersistedStartupReadinessOrdering();
-  testPersistedDisabledStartup();
+  await testPersistedDisabledStartup();
   await testDisableInvalidatesPendingEnablement();
   await testWorkerStopOwnsExactPid();
   testSettingsClassification();

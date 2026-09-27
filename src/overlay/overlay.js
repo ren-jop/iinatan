@@ -4271,10 +4271,79 @@
 
   function scheduleHidePopup() {
     if (window.__IINATAN_POPUP_PREVIEW__) return;
-    if (state.hideTimer) clearTimeout(state.hideTimer);
-    // Keep just enough time for the pointer to cross the word-to-popup safety
-    // corridor; once it is outside both areas the popup disappears immediately.
-    state.hideTimer = setTimeout(() => hidePopup(), 60);
+    // Do not keep restarting this timer while the pointer is already outside.
+    // That could leave a popup alive indefinitely during continuous mouse movement.
+    if (state.hideTimer) return;
+    state.hideTimer = setTimeout(() => {
+      state.hideTimer = null;
+      hidePopup();
+    }, 90);
+  }
+  function elementContainsPointerPoint(element, clientX, clientY) {
+    if (!element || typeof element.getBoundingClientRect !== "function")
+      return false;
+    try {
+      if (
+        element.classList &&
+        element.classList.contains("hidden")
+      )
+        return false;
+      const rect = element.getBoundingClientRect();
+      return (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+  function pointerInsideActiveLookup(clientX, clientY) {
+    const x = Number(clientX);
+    const y = Number(clientY);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return true;
+    if (
+      allPopupContainers().some((popup) =>
+        elementContainsPointerPoint(popup, x, y),
+      )
+    )
+      return true;
+    if (
+      state.audioSourceMenu &&
+      elementContainsPointerPoint(state.audioSourceMenu, x, y)
+    )
+      return true;
+    const start = Number(state.activeMatchStart);
+    const length = Math.max(0, Number(state.activeMatchLength) || 0);
+    if (!Number.isFinite(start) || !length) return false;
+    return activeMatchElements(start, length).some((element) =>
+      elementContainsPointerPoint(element, x, y),
+    );
+  }
+  function enforcePopupPointerOwnership(event) {
+    if (
+      window.__IINATAN_POPUP_PREVIEW__ ||
+      popupEl.classList.contains("hidden")
+    )
+      return;
+    if (
+      pointerInsideActiveLookup(
+        event && event.clientX,
+        event && event.clientY,
+      )
+    )
+      cancelHidePopupTimer();
+    else scheduleHidePopup();
+  }
+  function hidePopupWhenPointerLeavesWindow() {
+    if (
+      window.__IINATAN_POPUP_PREVIEW__ ||
+      popupEl.classList.contains("hidden")
+    )
+      return;
+    cancelHidePopupTimer();
+    hidePopup();
   }
   function closestExternalLink(target) {
     let el = target;
@@ -4310,10 +4379,20 @@
         String(sent),
     );
   }
-  popupSafetyZoneEl.addEventListener("mouseenter", cancelHidePopupTimer);
-  popupSafetyZoneEl.addEventListener("mouseleave", scheduleHidePopup);
-  popupRowSafetyZoneEl.addEventListener("mouseenter", cancelHidePopupTimer);
-  popupRowSafetyZoneEl.addEventListener("mouseleave", scheduleHidePopup);
+  // Safety-zone elements are positioning aids only. They must not keep the
+  // popup open after the pointer has left the actual word and visible popup.
+  document.addEventListener("mousemove", enforcePopupPointerOwnership, true);
+  if (window && typeof window.addEventListener === "function") {
+    window.addEventListener("blur", hidePopupWhenPointerLeavesWindow);
+    window.addEventListener(
+      "mouseout",
+      (event) => {
+        if (!event || !event.relatedTarget)
+          hidePopupWhenPointerLeavesWindow();
+      },
+      true,
+    );
+  }
   function trapPopupWheel(ev, explicitPopup) {
     const popup =
       explicitPopup ||
