@@ -875,13 +875,14 @@ const overlayAnkiExports = [
   passiveOverlay.updateAnkiCardState({
     requestId: passiveStatus.payload.requestId,
     ok: false,
-    state: "error",
+    state: "unavailable",
+    unavailable: true,
     message:
       "AnkiConnect did not respond after 3 attempts in 0.1 seconds (timeout 3 seconds per attempt).",
   });
   assert(
-    passiveButton.dataset.ankiState === "error",
-    "Passive Anki status failures should mark the button as errored",
+    passiveButton.dataset.ankiState === "ready",
+    "Passive Anki unavailability should leave the add button in its normal state",
   );
   assert(
     passiveContext.__elements.status.textContent === "",
@@ -907,15 +908,15 @@ const overlayAnkiExports = [
   passiveOverlay.updateAnkiCardState({
     requestId: deliberateAdd.payload.requestId,
     ok: false,
-    state: "error",
+    state: "unavailable",
+    unavailable: true,
     message:
       "AnkiConnect did not respond after 3 attempts in 0.1 seconds (timeout 3 seconds per attempt).",
   });
   assert(
-    /AnkiConnect did not respond/.test(
-      passiveContext.__elements.status.textContent,
-    ),
-    "Explicit Anki add failures should still show a status message",
+    passiveContext.__elements.status.textContent === "" &&
+      passiveButton.dataset.ankiState === "ready",
+    "Explicit adds while Anki is unavailable should stay silent and restore the normal add button",
   );
 
   console.log("overlay anki tests passed");

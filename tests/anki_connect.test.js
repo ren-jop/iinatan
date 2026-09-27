@@ -99,9 +99,10 @@ async function testAnkiConnectRetriesAndTimeouts() {
     assert(false, "Hung AnkiConnect should fail after retries");
   } catch (error) {
     assert(
-      /after 3 attempts in [0-9.]+ seconds \(timeout 1 seconds per attempt\)/.test(
-        String(error && error.message),
-      ),
+      error.ankiConnectRetryable &&
+        /after 3 attempts in [0-9.]+ seconds \(timeout 1 seconds per attempt\)/.test(
+          String(error && error.message),
+        ),
       "Hung AnkiConnect should report the retry count and timeout",
     );
   }
@@ -129,9 +130,10 @@ async function testAnkiConnectRetriesAndTimeouts() {
     assert(false, "Missing AnkiConnect should fail after retries");
   } catch (error) {
     assert(
-      /after 3 attempts in [0-9.]+ seconds \(timeout 3 seconds per attempt\)/.test(
-        String(error && error.message),
-      ),
+      error.ankiConnectRetryable &&
+        /after 3 attempts in [0-9.]+ seconds \(timeout 3 seconds per attempt\)/.test(
+          String(error && error.message),
+        ),
       "Missing AnkiConnect should report the retry count and timeout",
     );
   }

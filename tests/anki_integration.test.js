@@ -324,9 +324,11 @@ async function testAnkiBridgeRecoversAfterConnectTimeout() {
         message.payload &&
         message.payload.requestId === "recover-timeout" &&
         message.payload.ok === false &&
+        message.payload.state === "unavailable" &&
+        message.payload.unavailable === true &&
         /did not respond|timed out/i.test(message.payload.message || ""),
     ),
-    "Timed-out AnkiConnect add requests should report an error to the popup",
+    "Timed-out AnkiConnect add requests should be reported as unavailable",
   );
 
   fastTimers = false;

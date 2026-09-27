@@ -4272,7 +4272,7 @@
   function scheduleHidePopup() {
     if (window.__IINATAN_POPUP_PREVIEW__) return;
     if (state.hideTimer) clearTimeout(state.hideTimer);
-    state.hideTimer = setTimeout(() => hidePopup(), 240);
+    state.hideTimer = setTimeout(() => hidePopup(), 0);
   }
   function closestExternalLink(target) {
     let el = target;
@@ -5944,7 +5944,8 @@
     const button = ankiPrimaryButtonForGroup(group);
     const forceButton = ankiForceAddButtonForGroup(group);
     if (!group || !button) return;
-    const stateName = String((status && status.state) || "ready");
+    const rawStateName = String((status && status.state) || "ready");
+    const stateName = rawStateName === "unavailable" ? "ready" : rawStateName;
     const duplicate = !!(status && status.duplicate);
     const statusNoteIds = Array.isArray(status && status.noteIds)
       ? status.noteIds
@@ -9419,6 +9420,8 @@
     if (
       payload &&
       payload.ok === false &&
+      payload.unavailable !== true &&
+      payload.state !== "unavailable" &&
       payload.message &&
       pendingType !== "anki-card-status"
     )
