@@ -174,11 +174,7 @@ function overlayPlayerWindowReady() {
 function performOverlayDocumentLoad() {
   const reason = overlayDocumentLoadReason || "initialization";
   overlayDocumentLoadTimer = null;
-  if (
-    typeof pluginShuttingDown !== "undefined" &&
-    pluginShuttingDown
-  )
-    return;
+  if (typeof pluginShuttingDown !== "undefined" && pluginShuttingDown) return;
   if (!overlayPlayerWindowReady()) {
     overlayLoadNeedsWindowRetry = true;
     debugLog(
@@ -212,9 +208,7 @@ function loadOverlayDocument(reason) {
   }
   overlayLoadNeedsWindowRetry = false;
   if (overlayDocumentLoadTimer !== null) {
-    debugLog(
-      "coalesced overlay load reason=" + overlayDocumentLoadReason,
-    );
+    debugLog("coalesced overlay load reason=" + overlayDocumentLoadReason);
     return;
   }
   // Defer out of IINA's synchronous plugin/window event stack. This avoids
