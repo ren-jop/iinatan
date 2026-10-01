@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.10 - 2026-10-02
+
+### Added
+
+- Added a global Netflix launcher that opens Netflix in an isolated Google Chrome app-style window so protected playback remains inside a supported DRM-capable browser.
+- Added direct Netflix URL launching plus a Safari fallback for standard supported-browser playback.
+
+### Notes
+
+- Netflix video is not decrypted or passed through mpv; IINA remains the launcher while the supported browser handles protected playback.
+
 ## 2.1.9 - 2026-10-01
 
 ### Fixed
