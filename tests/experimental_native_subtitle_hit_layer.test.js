@@ -3163,6 +3163,11 @@ function waitForLayout() {
       lastNativeLayoutFingerprint: "preserved-layout",
       nativeLayoutStablePolls: 7,
       ensureOverlayBridge() {},
+      scheduleOneShot(callback) {
+        callback();
+        return null;
+      },
+      cancelOneShot() {},
       debugLog() {},
       verboseLogEnabled() {
         return false;
