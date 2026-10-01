@@ -278,7 +278,6 @@ assert(
   "Hiding the popup should also hide both safety zones",
 );
 
-
 const ownershipAnchor = context.document.createElement("span");
 ownershipAnchor._rect = {
   left: 100,
