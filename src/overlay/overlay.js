@@ -4285,10 +4285,7 @@
     if (!element || typeof element.getBoundingClientRect !== "function")
       return false;
     try {
-      if (
-        element.classList &&
-        element.classList.contains("hidden")
-      )
+      if (element.classList && element.classList.contains("hidden"))
         return false;
       const rect = element.getBoundingClientRect();
       return (
@@ -4330,10 +4327,7 @@
     )
       return;
     if (
-      pointerInsideActiveLookup(
-        event && event.clientX,
-        event && event.clientY,
-      )
+      pointerInsideActiveLookup(event && event.clientX, event && event.clientY)
     ) {
       cancelHidePopupTimer();
       return;
@@ -4395,8 +4389,7 @@
     window.addEventListener(
       "mouseout",
       (event) => {
-        if (!event || !event.relatedTarget)
-          hidePopupWhenPointerLeavesWindow();
+        if (!event || !event.relatedTarget) hidePopupWhenPointerLeavesWindow();
       },
       true,
     );
@@ -9521,7 +9514,13 @@
     if (
       payload &&
       payload.ok === false &&
-      !ankiStatusLooksUnavailable(payload) &&
+      ankiStatusLooksUnavailable(payload) &&
+      pendingType !== "anki-card-status"
+    )
+      setStatus({ message: "" });
+    else if (
+      payload &&
+      payload.ok === false &&
       payload.message &&
       pendingType !== "anki-card-status"
     )
