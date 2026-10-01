@@ -15144,7 +15144,7 @@ async function ankiConnectInvoke(action, params, options) {
     }
   }
   if (lastError && lastError.ankiConnectRetryable && attempts > 1) {
-    throw new Error(
+    throw ankiConnectTransportError(
       "AnkiConnect did not respond after " +
         String(attempts) +
         " attempts in " +
@@ -18121,9 +18121,15 @@ function handleBridgeAnkiCardAdd(payload) {
       });
     } catch (error) {
       const message = compactError(error);
+      const unavailable =
+        !!(error && error.ankiConnectRetryable) ||
+        /AnkiConnect did not respond|AnkiConnect .*timed out|AnkiConnect request failed|Failed to connect|ECONNREFUSED|connection refused/i.test(
+          message,
+        );
       postAnkiCardStateForBridgePayload(payload, {
         ok: false,
-        state: "error",
+        state: unavailable ? "unavailable" : "error",
+        unavailable,
         staleNoteIds: /No matching Anki cards/i.test(message),
         message,
       });
@@ -18309,11 +18315,7 @@ function overlayPlayerWindowReady() {
 function performOverlayDocumentLoad() {
   const reason = overlayDocumentLoadReason || "initialization";
   overlayDocumentLoadTimer = null;
-  if (
-    typeof pluginShuttingDown !== "undefined" &&
-    pluginShuttingDown
-  )
-    return;
+  if (typeof pluginShuttingDown !== "undefined" && pluginShuttingDown) return;
   if (!overlayPlayerWindowReady()) {
     overlayLoadNeedsWindowRetry = true;
     debugLog(
@@ -18347,9 +18349,7 @@ function loadOverlayDocument(reason) {
   }
   overlayLoadNeedsWindowRetry = false;
   if (overlayDocumentLoadTimer !== null) {
-    debugLog(
-      "coalesced overlay load reason=" + overlayDocumentLoadReason,
-    );
+    debugLog("coalesced overlay load reason=" + overlayDocumentLoadReason);
     return;
   }
   // Defer out of IINA's synchronous plugin/window event stack. This avoids
