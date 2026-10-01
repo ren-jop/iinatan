@@ -1,7 +1,7 @@
 {
   "name": "iinatan",
   "identifier": "com.afn478.iinatan",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "author": {
     "name": "afn478"
   },
@@ -11,7 +11,7 @@
   "preferencesPage": "preferences.html",
   "helpPage": "README.md",
   "ghRepo": "ren-jop/iinatan",
-  "ghVersion": 218,
+  "ghVersion": 219,
   "preferenceDefaults": {
     "enabledByDefault": true,
     "hideNativeSubtitles": true,
@@ -41,7 +41,7 @@
     "ankiDuplicateScope": "deck",
     "ankiSentenceAudioPaddingMs": 250,
     "lookupLanguage": "ja",
-    "fontScale": 1.0,
+    "fontScale": 1,
     "popupScale": 0.92,
     "popupMinWidth": 250,
     "popupMaxWidth": 440,

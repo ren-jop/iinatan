@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.9 - 2026-10-01
+
+### Fixed
+
+- Made dictionary lookup popups close immediately when the pointer leaves both the active subtitle word and the visible popup, while preserving a tiny handoff grace when moving directly between them.
+- Made invisible popup safety geometry pointer-inert so it no longer steals hover events or leaves sticky/flickering lookups behind.
+
 ## 2.1.8 - 2026-09-10
 
 ### Fixed

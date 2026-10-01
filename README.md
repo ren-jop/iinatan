@@ -35,14 +35,14 @@ For most users, the recommended option is the release package. Installing direct
 
 ### Install a Release Package (Recommended)
 
-Download `iinatan.iinaplgz` from the [latest version on GitHub](https://github.com/afn478/iinatan/releases/latest) and install it through IINA's plugin manager.
+Download `iinatan.iinaplgz` from the [latest version on GitHub](https://github.com/ren-jop/iinatan/releases/latest) and install it through IINA's plugin manager.
 
 ### Install From GitHub
 Use this only if you want the newest in-progress changes and are comfortable with occasional breakage.
 
 1. Open IINA's plugin manager.
 2. Choose **Install from GitHub**.
-3. Enter `afn478/iinatan`.
+3. Enter `ren-jop/iinatan`.
 4. Enable the plugin.
 5. Open **Plugins -> iinatan -> Settings...**.
 6. Install the recommended dictionary, or import a Yomitan-compatible dictionary ZIP.
