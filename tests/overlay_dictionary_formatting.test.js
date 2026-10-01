@@ -24,6 +24,8 @@ const { context, overlay } = loadOverlayForTest([
   "placePopup",
   "hidePopup",
   "scheduleHidePopup",
+  "showPopup",
+  "enforcePopupPointerOwnership",
   "renderSubtitle",
 ]);
 
@@ -248,31 +250,66 @@ assert(
   "Below-row placement should keep selected-word protection exact",
 );
 overlay.scheduleHidePopup();
-popupSafetyZone.listeners.mouseenter({});
-assert(
-  overlay.state.hideTimer === null,
-  "Entering the popup safety zone should cancel pending popup hiding",
-);
-popupSafetyZone.listeners.mouseleave({});
 assert(
   overlay.state.hideTimer,
-  "Leaving the popup safety zone should schedule popup hiding",
+  "Leaving a real lookup surface should start the short popup handoff grace",
 );
-popupRowSafetyZone.listeners.mouseenter({});
+assert(
+  typeof popupSafetyZone.listeners.mouseenter !== "function" &&
+    typeof popupSafetyZone.listeners.mouseleave !== "function" &&
+    typeof popupRowSafetyZone.listeners.mouseenter !== "function" &&
+    typeof popupRowSafetyZone.listeners.mouseleave !== "function",
+  "Invisible safety geometry must never own popup hover state",
+);
+context.__elements.popup.listeners.mouseenter({});
 assert(
   overlay.state.hideTimer === null,
-  "Entering selected-word protection should cancel pending popup hiding",
+  "Entering the visible popup should cancel the handoff grace",
 );
-popupRowSafetyZone.listeners.mouseleave({});
+context.__elements.popup.listeners.mouseleave({});
 assert(
   overlay.state.hideTimer,
-  "Leaving selected-word protection should schedule popup hiding",
+  "Leaving the visible popup should start the handoff grace",
 );
 overlay.hidePopup();
 assert(
   popupSafetyZone.classList.contains("hidden") &&
     popupRowSafetyZone.classList.contains("hidden"),
   "Hiding the popup should also hide both safety zones",
+);
+
+
+const ownershipAnchor = context.document.createElement("span");
+ownershipAnchor._rect = {
+  left: 100,
+  top: 500,
+  right: 124,
+  bottom: 526,
+  width: 24,
+  height: 26,
+};
+context.__elements.popup._rect = {
+  left: 180,
+  top: 260,
+  right: 480,
+  bottom: 420,
+  width: 300,
+  height: 160,
+};
+overlay.state.charByPos[0] = ownershipAnchor;
+overlay.state.activeMatchStart = 0;
+overlay.state.activeMatchLength = 1;
+overlay.showPopup(ownershipAnchor, "test", "<div>definition</div>");
+overlay.enforcePopupPointerOwnership({ clientX: 220, clientY: 300 });
+assert(
+  !context.__elements.popup.classList.contains("hidden"),
+  "Moving inside the visible popup should keep it open",
+);
+overlay.enforcePopupPointerOwnership({ clientX: 900, clientY: 300 });
+assert(
+  context.__elements.popup.classList.contains("hidden") &&
+    overlay.state.hideTimer === null,
+  "Observed pointer movement outside both word and popup should close immediately",
 );
 context.__elements.popup._rect = {
   left: 120,
@@ -1243,10 +1280,10 @@ assert(
 
 const css = fs.readFileSync(path.join(root, "src/overlay/overlay.css"), "utf8");
 assert(
-  /#popup-safety-zone,\s*#popup-row-safety-zone \{[^}]*background: transparent;[^}]*pointer-events: auto;[^}]*\}/s.test(
+  /#popup-safety-zone,\s*#popup-row-safety-zone \{[^}]*background: transparent;[^}]*pointer-events: none;[^}]*\}/s.test(
     css,
   ),
-  "Both popup safety regions should remain transparent hit targets",
+  "Popup safety geometry should be transparent and pointer-inert",
 );
 assert(
   !/#popup-safety-zone,\s*#popup-row-safety-zone \{[^}]*\bheight:/s.test(css),

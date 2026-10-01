@@ -135,6 +135,7 @@
     },
   };
   const LOOKUP_RETRY_INTERVAL_MS = 60;
+  const POPUP_HANDOFF_GRACE_MS = 48;
   const AUDIO_CACHE_MAX_ENTRIES = 32;
   const AUDIO_CANDIDATE_CACHE_MAX_ENTRIES = 64;
   const CONTROLLER_HOLD_MS = 650;
@@ -4271,13 +4272,14 @@
 
   function scheduleHidePopup() {
     if (window.__IINATAN_POPUP_PREVIEW__) return;
-    // Do not keep restarting this timer while the pointer is already outside.
-    // That could leave a popup alive indefinitely during continuous mouse movement.
+    // This timer is only a handoff grace for crossing the transparent gap from
+    // the subtitle to the popup (or back). Real pointer movement observed
+    // outside both surfaces closes synchronously in enforcePopupPointerOwnership.
     if (state.hideTimer) return;
     state.hideTimer = setTimeout(() => {
       state.hideTimer = null;
       hidePopup();
-    }, 90);
+    }, POPUP_HANDOFF_GRACE_MS);
   }
   function elementContainsPointerPoint(element, clientX, clientY) {
     if (!element || typeof element.getBoundingClientRect !== "function")
@@ -4332,9 +4334,15 @@
         event && event.clientX,
         event && event.clientY,
       )
-    )
+    ) {
       cancelHidePopupTimer();
-    else scheduleHidePopup();
+      return;
+    }
+    // If WebKit delivered a real mousemove here, the pointer is definitively
+    // outside the active word, popup, nested popups, and audio menu. Do not add
+    // another delay: stale popups should disappear in this same event turn.
+    cancelHidePopupTimer();
+    hidePopup();
   }
   function hidePopupWhenPointerLeavesWindow() {
     if (

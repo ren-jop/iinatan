@@ -267,7 +267,8 @@
       position: absolute;
       z-index: 20;
       background: transparent;
-      pointer-events: auto;
+      /* Geometry helpers only. Never steal hover from the real word/popup. */
+      pointer-events: none;
     }
     #popup-safety-zone.hidden,
     #popup-row-safety-zone.hidden { display: none; }
