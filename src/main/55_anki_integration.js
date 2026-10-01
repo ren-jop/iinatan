@@ -1253,9 +1253,15 @@ function handleBridgeAnkiCardAdd(payload) {
       });
     } catch (error) {
       const message = compactError(error);
+      const unavailable =
+        !!(error && error.ankiConnectRetryable) ||
+        /AnkiConnect did not respond|AnkiConnect .*timed out|AnkiConnect request failed|Failed to connect|ECONNREFUSED|connection refused/i.test(
+          message,
+        );
       postAnkiCardStateForBridgePayload(payload, {
         ok: false,
-        state: "error",
+        state: unavailable ? "unavailable" : "error",
+        unavailable,
         staleNoteIds: /No matching Anki cards/i.test(message),
         message,
       });
