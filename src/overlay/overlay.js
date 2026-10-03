@@ -4332,10 +4332,13 @@
       cancelHidePopupTimer();
       return;
     }
-    // If WebKit delivered a real mousemove here, the pointer is definitively
-    // outside the active word, popup, nested popups, and audio menu. Do not add
-    // another delay: stale popups should disappear in this same event turn.
-    cancelHidePopupTimer();
+    // mouseleave starts a tiny handoff grace so the pointer can cross the real
+    // CSS gap between the subtitle and popup. Do not let the document-level
+    // mousemove handler defeat that grace on the first pixel of the gap.
+    //
+    // Once the grace expires, or when there was no surface leave to hand off
+    // from, a real move outside every lookup surface still closes immediately.
+    if (state.hideTimer) return;
     hidePopup();
   }
   function hidePopupWhenPointerLeavesWindow() {
