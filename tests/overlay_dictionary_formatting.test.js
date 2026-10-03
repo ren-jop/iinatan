@@ -304,11 +304,25 @@ assert(
   !context.__elements.popup.classList.contains("hidden"),
   "Moving inside the visible popup should keep it open",
 );
+overlay.scheduleHidePopup();
+const handoffTimer = overlay.state.hideTimer;
+overlay.enforcePopupPointerOwnership({ clientX: 150, clientY: 460 });
+assert(
+  !context.__elements.popup.classList.contains("hidden") &&
+    overlay.state.hideTimer === handoffTimer,
+  "Pointer movement through the word-to-popup gap must preserve the active handoff grace",
+);
+context.__elements.popup.listeners.mouseenter({});
+assert(
+  !context.__elements.popup.classList.contains("hidden") &&
+    overlay.state.hideTimer === null,
+  "Entering the visible popup during handoff should keep it open and cancel hiding",
+);
 overlay.enforcePopupPointerOwnership({ clientX: 900, clientY: 300 });
 assert(
   context.__elements.popup.classList.contains("hidden") &&
     overlay.state.hideTimer === null,
-  "Observed pointer movement outside both word and popup should close immediately",
+  "Observed pointer movement outside both word and popup should still close immediately when no handoff is active",
 );
 context.__elements.popup._rect = {
   left: 120,
